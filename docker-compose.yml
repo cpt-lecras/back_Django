@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  back:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./.report:/app/queuetask/reports
+    restart: always
+
+
+  proxy:
+    image: nginx
+    ports:
+      - 8003:8000
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/django.conf
+    restart: always
+    depends_on:
+      - back

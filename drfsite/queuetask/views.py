@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from .scheduler import scheduler
 import csv
+import os
 from datetime import datetime
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -152,7 +153,7 @@ class OperationsViewSet(ViewSet):
 
             # Создать имя файла с текущей датой и временем
             filename = f"queue_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            file_path = f"C://Users//LeCras//Desktop//{filename}"
+            file_path = f"queuetask//reports//{filename}"
 
             # Выгрузить данные в CSV-файл
             with open(file_path, 'w', newline='') as csvfile:
