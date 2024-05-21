@@ -1,4 +1,4 @@
 #!/bin/sh
 
 python manage.py migrate
-gunicorn --workers=4 -b=0.0.0.0:8000 drfsite.wsgi:application
+gunicorn --workers=1 -b=0.0.0.0:8080 drfsite.wsgi:application

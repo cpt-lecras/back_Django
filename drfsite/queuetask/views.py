@@ -1,9 +1,12 @@
+from pathlib import Path
+
+from django.http import FileResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from .scheduler import scheduler
 import csv
-import os
+from drfsite import settings
 from datetime import datetime
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
@@ -173,3 +176,12 @@ class OperationsViewSet(ViewSet):
         except Exception as e:
             # В случае ошибки завершить операцию с ошибкой
             finish_operation(operation_id, {'error': str(e)})
+
+
+    def download_file(self, _, filename):
+        reports_dir = Path(settings.BASE_DIR) / 'queuetask' / 'reports'
+        file_path = reports_dir / filename
+        if file_path.exists():
+            return FileResponse(open(file_path, 'rb'), as_attachment=True)
+        else:
+            raise Response(status=status.HTTP_404_NOT_FOUND)

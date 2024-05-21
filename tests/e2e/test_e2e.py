@@ -2,7 +2,7 @@ import requests
 
 
 
-base_url='http://localhost:8000'
+base_url='http://localhost:8080'
 
 def test_get_apps_empty():
     jsonf = {

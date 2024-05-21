@@ -1,4 +1,7 @@
+import sys
+import os
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../drfsite')))
 import pytest
 from queuetask.models import QueueEntry, QueueEntryStatus, Human
 from queuetask.application_service import queues, create_queue, add_user_to_queue, get_queue_entries

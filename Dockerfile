@@ -10,5 +10,7 @@ COPY ./drfsite .
 COPY ./entrypoint.sh .
 
 RUN mkdir -p queuetask/reports
+RUN chmod 777 ./entrypoint.sh
+
 
 ENTRYPOINT ["./entrypoint.sh"]

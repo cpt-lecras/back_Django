@@ -49,6 +49,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('operations/create/', OperationsViewSet.as_view({'post': 'export_data'}), name='export-data'),
     path('operations/tt/<uuid:operation_id>/', OperationsViewSet.as_view({'get': 'retrieve'}), name='get-operation'),
+    path('operations/report/<path:filename>/', OperationsViewSet.as_view({'get': 'download_file'}), name='download-file'),
 
     path('queue/', QueueEntryViewSet.as_view({'post': 'create'}), name='create-queue'),
     path('queue/<int:queue_id>/', QueueEntryViewSet.as_view({'get': 'get_queue'}), name='list-of-users'),
