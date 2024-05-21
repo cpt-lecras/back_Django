@@ -169,7 +169,7 @@ class OperationsViewSet(ViewSet):
                     })
 
             # Завершить операцию и сохранить результат
-            finish_operation(operation_id, {'file': filename})
+            finish_operation(operation_id, {'file': file_path})
         except Exception as e:
             # В случае ошибки завершить операцию с ошибкой
             finish_operation(operation_id, {'error': str(e)})
