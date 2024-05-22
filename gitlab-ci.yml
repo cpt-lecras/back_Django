@@ -1,0 +1,88 @@
+
+    
+
+stages:
+  - test
+  - build
+  - deploy
+
+
+
+run-unit-tests:
+    
+    stage: test
+    image: python:3.10
+    script:
+        - ls -l -a
+        - pip install -r requirements.txt
+        - python -m pytest ./tests/unit
+    
+run-e2e-tests:
+    stage: test
+    image: python:3.10
+    script:
+        - |
+            pip install gunicorn
+            pip install -r requirements.txt
+        - gunicorn --workers=1 -b=0.0.0.0:8080 --chdir=./drfsite --daemon drfsite.wsgi:application
+        - sleep 5
+        - python -m pytest ./tests/e2e
+
+build-prod-image:
+    stage: build
+    image: docker:dind
+    script:
+        - docker build -f Dockerfile -t queue_app:latest .
+        - docker save queue_app:latest > queue_app.tar
+    needs:
+        - run-unit-tests
+        - run-e2e-tests
+    artifacts:
+        when: on_success
+        expire_in: 10m
+        paths:
+            - "queue_app.tar"
+
+push-to-dockerhub:
+    stage: deploy
+    image: docker:dind
+    before_script:
+        - docker load --input queue_app.tar
+        - docker login -u $DH_USERNAME -p $DH_PASSWORD
+    script:
+        - docker tag queue_app:latest $DH_USERNAME/queue_app:latest
+        - docker tag queue_app:latest $DH_USERNAME/queue_app:$CI_PIPELINE_IID
+        - docker push $DH_USERNAME/queue_app:latest
+        - docker push $DH_USERNAME/queue_app:$CI_PIPELINE_IID
+    needs:
+        - build-prod-image
+
+push-to-yandex:
+    stage: deploy
+    image: docker:dind
+    before_script:
+        - docker load --input queue_app.tar
+        - echo $YC_JSON_KEY | docker login -u json_key --password-stdin cr.yandex
+    script:
+        - docker tag queue_app:latest cr.yandex/$YC_CR_ID/queue_app:latest
+        - docker tag queue_app:latest cr.yandex/$YC_CR_ID/queue_app:$CI_PIPELINE_IID
+        - docker push cr.yandex/$YC_CR_ID/queue_app:latest
+        - docker push cr.yandex/$YC_CR_ID/queue_app:$CI_PIPELINE_IID
+    needs:
+        - build-prod-image
+
+deploy-to-yandex:
+    stage: deploy
+    image: ubuntu
+    before_script:
+        - echo $YC_JSON_KEY > key.json
+        - apt-get update && apt-get install curl -y
+        - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -i /opt/yc -a
+        - /opt/yc/bin/yc config profile create sa-profile
+        - /opt/yc/bin/yc config set service-account-key key.json
+        - /opt/yc/bin/yc config set cloud-id $YC_CLOUD_ID
+        - /opt/yc/bin/yc config set folder-id $YC_FOLDER_ID
+    script:
+        - /opt/yc/bin/yc serverless container revision deploy --container-name $YC_CONTAINER_NAME --image cr.yandex/$YC_CR_ID/queue_app:latest --service-account-id $YC_SA_ID --execution-timeout 30s --cores 1 --memory 1GB --concurrency 1
+    needs:
+        - push-to-yandex
